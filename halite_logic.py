@@ -174,6 +174,7 @@ def makeMove2(state, action):
 
     # Manage cyclic game board
     #new_loc = bi[0] + actions[action][0], bj[0] + actions[action][1]
+    print("action = {}".format(action))
     row = bi[0] + actions[action][0]
     row = row%taille
     col = bj[0] + actions[action][1]
@@ -247,6 +248,7 @@ def dispGrid2(state, r):
     plt.show()
 
 
+''' Execution that tests above functions
 taille = 5
 state = initGrid(taille)
 r = 1000
@@ -280,7 +282,7 @@ while status:
 print('{} iterations'.format(iter))
 print('Final reward = {}'.format(r))
 
-
+'''
 
 
 '''for i in range(30):

@@ -51,7 +51,7 @@ for i in range(epochs):
         qval = model.predict(state.reshape(1, taille*taille*4), batch_size=1)
         print("qval = {}".format(qval))
         if (np.random.random() < epsilon):  # choose random action
-            action = np.random.randint(0, 4)
+            action = np.random.randint(0, 5)
         else:  # choose best action from Q(s,a) values
             action = (np.argmax(qval))
         # Take action, observe new state S'

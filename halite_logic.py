@@ -15,7 +15,7 @@ Ships can carry up to 1000 halite.
 '''
 
 def initGrid(taille):
-    np.random.seed(3)
+    #np.random.seed(3)
     state = np.zeros((4, taille, taille), dtype=np.int)
     print(state.shape)
     # place boat
@@ -79,7 +79,7 @@ def findLoc(state, level, value):
                 return i, j
                 
 '''
-
+'''
 def makeMove(state, action):
     #        boat, wall, halite, shipyard
     # level :0,    1   , 2,    , 3
@@ -101,44 +101,48 @@ def makeMove(state, action):
             state[0][bi,bj] = 0
             # move boat
             state[0][new_loc] = 1
-        #elif state[3][new_loc] == 1 : # reached the shipyard
+        # elif state[3][new_loc] == 1 : # reached the shipyard
         #    state[0][new_loc] = 0
         #    status = False
 
 
     return state
-
-
+'''
+'''
 def reward(state, action):
+    result = 0
     if action in [0, 1, 3, 4]: # moving
         # get boat location
         bN, bi, bj = getLocation(state, 0, 1)
         # look for halite below boat
         halite = state[2][bi,bj]
 
-        return -round(0.1*halite[0])
-    else: # styaing
+        result = -np.round(0.1*halite[0])
+    else: # staying still on cell
         # get boat location
         bN, bi, bj = getLocation(state, 0, 1)
         # look for halite below boat
         halite = state[2][bi,bj]
+        # update halite map
+        print('updating halite map')
+        state[2][bi,bj] = state[2][bi,bj]-np.round(0.25*state[2][bi,bj])
 
-        return round(0.25*halite[0])
+        result = np.round(0.25*halite[0])
+    return state, result
+    
+    
+'''
 
-
-
-
-
-
+'''
 
 
 def dispGrid(state):
     fig, ax = plt.subplots()
 
 
-    '''ib, jb = findLoc(state, 0, 1)
+    #ib, jb = findLoc(state, 0, 1)
 
-    ax.text(jb, ib, 'B', va='center', ha='center', fontsize=20)'''
+    #ax.text(jb, ib, 'B', va='center', ha='center', fontsize=20)
     blocs = np.where(state[0]==1)
     for i in range(len(blocs[0])):
         ax.text(blocs[1][i], blocs[0][i], 'B', va='center', ha='center', fontsize=20)
@@ -151,7 +155,75 @@ def dispGrid(state):
         ax.text(slocs[1][i], slocs[0][i], 'S', va='center', ha='center', fontsize=20)
 
     ax.imshow(state[2]/500, cmap='Blues', vmin=0, vmax = 2)
-    plt.show()
+    plt.show()'''
+
+def makeMove2(state, action):
+    #        boat, wall, halite, shipyard
+    # level :0,    1   , 2,    , 3
+    taille = state.shape[-1]
+    r: int = 0
+    # boat location
+    bN, bi, bj = getLocation(state, 0, 1)
+    # wall location
+    wN, wi, wj = getLocation(state, 1, 1)
+    # shipyard location
+    sN, si, sj = getLocation(state, 3, 1)
+
+    # actions and future location
+    actions = [[-1, 0], [1, 0], [0, 0], [0, -1], [0, 1]]
+
+    # Manage cyclic game board
+    #new_loc = bi[0] + actions[action][0], bj[0] + actions[action][1]
+    row = bi[0] + actions[action][0]
+    row = row%taille
+    col = bj[0] + actions[action][1]
+    col = col%taille
+    new_loc = row, col
+    # move only if not wall, and new pos does not exceed grid !
+    isInGrid = (np.array(new_loc) <= (taille-1, taille-1)).all() & (np.array(new_loc) >= (0, 0)).all()
+    #if isInGrid==False:
+    #    new_loc[0] = new_loc[0]%taille
+    #    new_loc[1] = new_loc[1]%taille
+
+    isNotWall = state[1][new_loc] == 0
+    isStillMove = action==2
+    isShipyard = state[3][new_loc] == 0
+
+    if isStillMove : # capture halite
+        halite = np.copy(state[2][bi, bj])
+        print('updating halite map')
+        state[2][bi,bj] = state[2][bi,bj]-np.round(0.25*halite[0])
+        r = np.round(halite[0]*0.25)
+        return state, r
+
+    else:
+        if isNotWall: # move
+            # erase old location
+            state[0][bi,bj] = 0
+            halite = np.copy(state[2][bi, bj])
+            r = -np.round(halite[0]*0.1)
+            # move boat
+            state[0][new_loc] = 1
+            print('move in grid')
+            return state, r
+        if state[1][new_loc]==1: # collision with wall
+            #boat disappears
+            state[0][bi, bj] = 0
+            r = 0
+            print('collision with wall')
+            return state, r
+        else: # out of grid
+            r = 0
+            print('out of grid')
+            return state, r
+
+
+
+
+
+
+
+
 def dispGrid2(state, r):
     fig, ax = plt.subplots()
 
@@ -174,16 +246,19 @@ def dispGrid2(state, r):
     plt.title('reward = {}'.format(r))
     plt.show()
 
+
 taille = 5
 state = initGrid(taille)
-r = 0
+r = 1000
 iter = 0
 status = True
 while status:
     iter = iter + 1
     action = np.random.randint(0,4)
-    state = makeMove(state, action)
-    r = np.max([r + reward(state, action), 1000])
+    #actions = [[-1, 0], [1, 0], [0, 0], [0, -1], [0, 1]]
+    state, r0 = makeMove2(state, action)
+    print('instant reward {}'.format(r0))
+    r = np.min([r + r0, 1000])
 
     dispGrid2(state, r)
     # test if position is shipyard
@@ -198,11 +273,14 @@ while status:
     if r <= 0:
         status = False
         print('out of halite')
-    if state[0][bi,bj] == 0 :
+    if np.sum(state[0]) == 0 : # no boat
         status= False
         print('boat collapsed')
 
+print('{} iterations'.format(iter))
 print('Final reward = {}'.format(r))
+
+
 
 
 '''for i in range(30):

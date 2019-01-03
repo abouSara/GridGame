@@ -127,7 +127,7 @@ def trainModel(model, epochs, gamma, epsilon, batchSize, buffer):
     model.save(model_name)
     print('model saved : ', model_name)
     return model
-
+'''
 # testing above functions
 taille = 5
 epochs = 100 # nombre de parties
@@ -137,4 +137,4 @@ batchSize = 40
 buffer = 80
 model = initModel(taille)
 model = trainModel(model, epochs, gamma, epsilon, batchSize, buffer)
-
+'''
